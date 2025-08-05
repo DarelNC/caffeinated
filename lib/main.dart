@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MainApp());
@@ -11,7 +12,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: const HomeScreen(),
+      home: HomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -27,6 +28,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   static const platform = MethodChannel('foreground_service');
   bool isRunning = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestNotificationPermission();
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+  }
 
   Future<void> toggleService() async {
     try {

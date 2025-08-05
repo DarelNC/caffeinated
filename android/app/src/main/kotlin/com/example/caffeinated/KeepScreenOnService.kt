@@ -1,9 +1,11 @@
 package com.example.caffeinated
 
 import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 
 class KeepScreenOnService : Service() {
@@ -11,37 +13,58 @@ class KeepScreenOnService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val channelId = "keep_screen_on_channel"
-        val channelName = "Keep Screen On"
+        Log.d("KeepScreenOnService", "Service created")
 
-        val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW)
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.createNotificationChannel(channel)
+        createNotificationChannel()
 
-        val notification = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Mantener pantalla activa")
-            .setContentText("La pantalla no se apagará")
-            .setSmallIcon(android.R.drawable.ic_menu_view)
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(this, "keep_screen_on_channel")
+            .setContentTitle("Pantalla activa")
+            .setContentText("Este servicio mantiene la pantalla encendida.")
+            .setSmallIcon(R.drawable.ic_caffeinated_on_large)
+            .setContentIntent(pendingIntent)
+            .setOngoing(true)
             .build()
 
         startForeground(1, notification)
 
         val pm = getSystemService(POWER_SERVICE) as PowerManager
-        // wakeLock = pm.newWakeLock(
-        //     PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
-        //     "KeepScreenOn::Wakelock"
-        // )
         wakeLock = pm.newWakeLock(
             PowerManager.FULL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
             "KeepScreenOn::WakeLock"
         )
+        if (wakeLock?.isHeld != true) {
+            wakeLock?.acquire()
+        }
+    }
 
-        wakeLock?.acquire()
+    private fun createNotificationChannel() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "keep_screen_on_channel",
+                "Keep Screen On",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Canal para mantener la pantalla encendida"
+            }
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        wakeLock?.release()
+        if (wakeLock?.isHeld == true) {
+            wakeLock?.release()
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
