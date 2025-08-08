@@ -31,6 +31,8 @@ class KeepScreenOnService : Service() {
             .setSmallIcon(R.drawable.ic_caffeinated_on_large)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .build()
 
         startForeground(1, notification)
@@ -53,6 +55,8 @@ class KeepScreenOnService : Service() {
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Canal para mantener la pantalla encendida"
+                setShowBadge(false)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             }
 
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
