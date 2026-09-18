@@ -21,3 +21,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+  fonts:
+    - family: Archivo Black
+      fonts:
+        - asset: assets/fonts/ArchivoBlack-Regular.ttf
+    - family: Major Mono Display
+      fonts:
+        - asset: assets/fonts/MajorMonoDisplay-Regular.ttf
+    - family: DM Serif Display Italic
+      fonts:
+        - asset: assets/fonts/DMSerifDisplay-Italic.ttf
+          style: italic

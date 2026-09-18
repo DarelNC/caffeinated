@@ -62,12 +62,49 @@ what was kept, dropped, or reshaped, and why.
     device awake" is a live, ongoing state and the UI should read as alive,
     not as a form that was submitted.
   The "do instead" list (real typographic hierarchy, a deliberate color
-  system, motion with intent, custom iconography) is the direct brief for
-  the maximalist redesign.
+  system, motion with intent, custom iconography) was the direct brief for
+  the first redesign pass (an improvised neo-brutalist look), later replaced
+  by an actual named design system — see below.
 - **design.md — iterate live, don't commit the exploration.** Applies the
   same way: try palette/motion variations in the running app, keep only the
   winner, note rejected directions here instead of leaving dead widgets in
   git history.
+
+## Design system: "New Cycle"
+
+The UI now follows an external design system doc ("New Cycle") rather than
+an improvised look, superseding the first neo-brutalist redesign pass
+mentioned above. It's a general brutalist-functional system (hard borders,
+zero corner radius, offset hard shadows, one signal accent color, three
+named type faces) meant for any surface, not written for this app or for
+Flutter specifically — three adaptation calls were made bringing it in:
+
+- **Ground palette: Oxblood, not the system's default Plum.** The doc
+  sanctions three interchangeable dark grounds (Plum/Night/Oxblood) and says
+  to pick one and stay in it. Oxblood's deep red-brown reads as
+  coffee/espresso-adjacent, which neither Plum (purple) nor Night (blue)
+  do — a real fit for what this app is, not just the first option in the
+  list.
+- **Fonts bundled locally, not fetched from Google Fonts at runtime.** The
+  three faces (Archivo Black, Major Mono Display, DM Serif Display italic)
+  are Google Fonts; this app is deliberately offline (see the dropped
+  architecture.md/stack.md network-dependency rules above), so the actual
+  OFL-licensed `.ttf` files are committed under `assets/fonts/` and declared
+  in `pubspec.yaml`'s `fonts:` block instead of using a package that fetches
+  them over the network on first use.
+- **Centering, read narrowly.** The system's hard rule is "everything is
+  flush left," with one named exception: "a single-element empty state."
+  This app's core screen (icon + Archivo Black headline + one DM Serif
+  italic line + one primary action) is structurally identical to the doc's
+  own named Empty State component, so that block is centered under the
+  exception; the brand mark stays flush left as page chrome, and the
+  duration row/button are full-width controls, not centered text, so the
+  rule doesn't apply to them either way.
+
+The coffee-mug icons (`assets/images/ic_caffeinated_*_large.svg`) were also
+redrawn from scratch to match the system's icon language (straight edges,
+uniform stroke, square caps/joins, no fill) — the originals had soft curves
+and inconsistent stroke weights that didn't fit.
 
 ## Cut list (things considered and deliberately not built yet)
 

@@ -5,14 +5,26 @@ import 'package:permission_handler/permission_handler.dart';
 
 import 'screen_awake_service.dart';
 
-// A deliberately loud, non-default palette instead of Material's stock
-// purple/blue — see docs/rules.md (design.md adaptation).
-class _Palette {
-  static const idleBg = Color(0xFF1B1023); // dark plum
-  static const activeBg = Color(0xFFFF5A1F); // burnt orange, "espresso shot"
-  static const ink = Color(0xFF120B15); // near-black, used for hard borders/shadows
-  static const cream = Color(0xFFFAF8FD); // matches the bundled SVG artwork
-  static const alert = Color(0xFFFFD400);
+/// New Cycle design system, "Oxblood" ground — see docs/rules.md for why
+/// this ground was picked over the default Plum, and why fonts are bundled
+/// locally instead of fetched from Google Fonts at runtime.
+class _Tokens {
+  static const ground = Color(0xFF2A0F14);
+  static const surface = Color(0xFF221A26);
+  static const ink = Color(0xFFF6EFE6);
+  static const inkMuted = Color(0xFFD8B6AD); // Oxblood row override
+  static const signal = Color(0xFFE9FF4F);
+  static const signalInk = Color(0xFF17101B);
+  static const alert = Color(0xFFFF5C1C);
+  static const accent2 = Color(0xFF8C2F1B); // Oxblood row override
+
+  static const archivoBlack = 'Archivo Black';
+  static const majorMono = 'Major Mono Display';
+  static const dmSerifItalic = 'DM Serif Display Italic';
+
+  static const pressFeedback = Duration(milliseconds: 110);
+  static const enterExit = Duration(milliseconds: 240);
+  static const enterExitCurve = Cubic(0.16, 0.84, 0.28, 1);
 }
 
 void main() {
@@ -29,7 +41,8 @@ class CaffeinatedApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        fontFamily: 'sans-serif',
+        fontFamily: _Tokens.majorMono,
+        scaffoldBackgroundColor: _Tokens.ground,
       ),
       home: const HomeScreen(),
     );
@@ -52,6 +65,8 @@ class _HomeScreenState extends State<HomeScreen>
   bool _busy = false;
   String? _error;
 
+  // A continuous pulse while active — deliberately on its own cycle, not
+  // synced to press/enter-exit motion (per the system's motion rules).
   late final AnimationController _pulseController;
 
   @override
@@ -121,12 +136,12 @@ class _HomeScreenState extends State<HomeScreen>
         _isRunning = confirmed ? wantsRunning : _isRunning;
         if (!confirmed) {
           _error = wantsRunning
-              ? "Couldn't confirm the screen lock started — try again."
-              : "Couldn't confirm it stopped — try again.";
+              ? "couldn't confirm it started — try again."
+              : "couldn't confirm it stopped — try again.";
         }
       });
     } on PlatformException catch (e) {
-      setState(() => _error = e.message ?? 'Something went wrong.');
+      setState(() => _error = e.message ?? 'something went wrong.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -143,71 +158,65 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bg = _isRunning ? _Palette.activeBg : _Palette.idleBg;
-    final fg = _isRunning ? _Palette.ink : _Palette.cream;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      color: bg,
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-            child: Column(
-              children: [
-                _Brand(color: fg),
-                const Spacer(),
-                _PulsingIcon(
-                  isRunning: _isRunning,
-                  fg: fg,
-                  bg: bg,
-                  pulse: _pulseController,
+    return Scaffold(
+      backgroundColor: _Tokens.ground,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            children: [
+              const _Brand(),
+              const Spacer(),
+              // The empty-state pattern (icon + Archivo Black heading + one
+              // DM Serif italic line) is the one place this system sanctions
+              // centering — everything else stays flush left.
+              Center(
+                child: Column(
+                  children: [
+                    _PulsingIcon(isRunning: _isRunning, pulse: _pulseController),
+                    const SizedBox(height: 32),
+                    Text(
+                      _isRunning ? "SCREEN'S AWAKE" : 'SCREEN CAN SLEEP',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: _Tokens.archivoBlack,
+                        color: _Tokens.ink,
+                        fontSize: 36,
+                        height: 1.05,
+                        letterSpacing: -1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _statusSubtitle(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: _Tokens.dmSerifItalic,
+                        fontStyle: FontStyle.italic,
+                        color: _Tokens.inkMuted,
+                        fontSize: 19,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  _isRunning ? "SCREEN'S AWAKE" : 'SCREEN CAN SLEEP',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 34,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    height: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  _statusSubtitle(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: fg.withValues(alpha: 0.75),
-                    fontSize: 15,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                _DurationRow(
-                  selected: _duration,
-                  fg: fg,
-                  onSelected: _busy ? null : _selectDuration,
-                ),
-                const SizedBox(height: 20),
-                if (_error != null) ...[
-                  _ErrorBanner(message: _error!),
-                  const SizedBox(height: 12),
-                ],
-                _ToggleButton(
-                  isRunning: _isRunning,
-                  busy: _busy,
-                  bg: bg,
-                  fg: fg,
-                  onTap: _toggle,
-                ),
+              ),
+              const Spacer(),
+              _DurationRow(
+                selected: _duration,
+                onSelected: _busy ? null : _selectDuration,
+              ),
+              const SizedBox(height: 20),
+              if (_error != null) ...[
+                _ErrorToast(message: _error!),
+                const SizedBox(height: 12),
               ],
-            ),
+              _ToggleButton(
+                isRunning: _isRunning,
+                busy: _busy,
+                onTap: _toggle,
+              ),
+            ],
           ),
         ),
       ),
@@ -215,27 +224,26 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   String _statusSubtitle() {
-    if (!_isRunning) return 'Pick how long, then hit go.';
-    if (_duration.minutes == null) return 'Until you say stop.';
-    return 'Off again in ${_duration.label.toLowerCase()}.';
+    if (!_isRunning) return 'pick a duration, then go.';
+    if (_duration.minutes == null) return 'runs until you stop it.';
+    return 'stops in ${_duration.label.toLowerCase()}.';
   }
 }
 
 class _Brand extends StatelessWidget {
-  const _Brand({required this.color});
-  final Color color;
+  const _Brand();
 
   @override
   Widget build(BuildContext context) {
-    return Align(
+    return const Align(
       alignment: Alignment.centerLeft,
       child: Text(
         'CAFFEINATED',
         style: TextStyle(
-          color: color,
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 4,
+          fontFamily: _Tokens.majorMono,
+          color: _Tokens.ink,
+          fontSize: 13,
+          letterSpacing: 3,
         ),
       ),
     );
@@ -243,16 +251,9 @@ class _Brand extends StatelessWidget {
 }
 
 class _PulsingIcon extends StatelessWidget {
-  const _PulsingIcon({
-    required this.isRunning,
-    required this.fg,
-    required this.bg,
-    required this.pulse,
-  });
+  const _PulsingIcon({required this.isRunning, required this.pulse});
 
   final bool isRunning;
-  final Color fg;
-  final Color bg;
   final AnimationController pulse;
 
   @override
@@ -264,51 +265,47 @@ class _PulsingIcon extends StatelessWidget {
     return AnimatedBuilder(
       animation: pulse,
       builder: (context, child) {
-        final scale = isRunning ? 1.0 + (pulse.value * 0.08) : 1.0;
-        final glow = isRunning ? 18.0 + (pulse.value * 22.0) : 0.0;
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Offset hard-shadow block behind the icon — the "layered,
-            // asymmetric" look instead of a flat centered circle.
-            Transform.translate(
-              offset: const Offset(10, 10),
-              child: Container(
-                width: 168,
-                height: 168,
-                decoration: const BoxDecoration(
-                  color: _Palette.ink,
-                  shape: BoxShape.circle,
-                ),
+        // Elevation is offset distance, not blur — a "breathing" hard
+        // shadow instead of a soft glow. Independent cycle from press/toast
+        // motion, per the system's rule that ambient loops don't sync.
+        final offset = isRunning ? 3.0 + (pulse.value * 5.0) : 0.0;
+        return Container(
+          width: 160,
+          height: 160,
+          decoration: BoxDecoration(
+            color: _Tokens.surface,
+            border: Border.all(color: _Tokens.ink, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: _Tokens.accent2,
+                offset: Offset(offset, offset),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(38),
+          child: AnimatedSwitcher(
+            duration: _Tokens.enterExit,
+            switchInCurve: _Tokens.enterExitCurve,
+            switchOutCurve: _Tokens.enterExitCurve,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.06),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
               ),
             ),
-            Transform.scale(
-              scale: scale,
-              child: Container(
-                width: 168,
-                height: 168,
-                decoration: BoxDecoration(
-                  color: fg,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: _Palette.ink, width: 5),
-                  boxShadow: isRunning
-                      ? [
-                          BoxShadow(
-                            color: _Palette.alert.withValues(alpha: 0.55),
-                            blurRadius: glow,
-                            spreadRadius: glow * 0.15,
-                          ),
-                        ]
-                      : null,
-                ),
-                padding: const EdgeInsets.all(40),
-                child: SvgPicture.asset(
-                  asset,
-                  colorFilter: ColorFilter.mode(bg, BlendMode.srcIn),
-                ),
+            child: SvgPicture.asset(
+              asset,
+              key: ValueKey(isRunning),
+              colorFilter: const ColorFilter.mode(
+                _Tokens.ink,
+                BlendMode.srcIn,
               ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -316,14 +313,9 @@ class _PulsingIcon extends StatelessWidget {
 }
 
 class _DurationRow extends StatelessWidget {
-  const _DurationRow({
-    required this.selected,
-    required this.fg,
-    required this.onSelected,
-  });
+  const _DurationRow({required this.selected, required this.onSelected});
 
   final AwakeDuration selected;
-  final Color fg;
   final ValueChanged<AwakeDuration>? onSelected;
 
   @override
@@ -335,7 +327,6 @@ class _DurationRow extends StatelessWidget {
             child: _DurationChip(
               duration: duration,
               isSelected: duration == selected,
-              fg: fg,
               onTap: onSelected == null ? null : () => onSelected!(duration),
             ),
           ),
@@ -350,13 +341,11 @@ class _DurationChip extends StatelessWidget {
   const _DurationChip({
     required this.duration,
     required this.isSelected,
-    required this.fg,
     required this.onTap,
   });
 
   final AwakeDuration duration;
   final bool isSelected;
-  final Color fg;
   final VoidCallback? onTap;
 
   @override
@@ -364,22 +353,21 @@ class _DurationChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: _Tokens.pressFeedback,
         curve: Curves.easeOut,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? _Palette.alert : Colors.transparent,
-          border: Border.all(color: fg, width: 2.5),
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? _Tokens.signal : Colors.transparent,
+          border: Border.all(color: _Tokens.ink, width: 2),
         ),
         alignment: Alignment.center,
         child: Text(
           duration.label,
           style: TextStyle(
-            color: isSelected ? _Palette.ink : fg,
-            fontWeight: FontWeight.w800,
+            fontFamily: _Tokens.majorMono,
+            color: isSelected ? _Tokens.signalInk : _Tokens.ink,
             fontSize: 12,
-            letterSpacing: 0.5,
+            letterSpacing: 0.96, // 0.08em @ 12px
           ),
         ),
       ),
@@ -391,15 +379,11 @@ class _ToggleButton extends StatefulWidget {
   const _ToggleButton({
     required this.isRunning,
     required this.busy,
-    required this.bg,
-    required this.fg,
     required this.onTap,
   });
 
   final bool isRunning;
   final bool busy;
-  final Color bg;
-  final Color fg;
   final VoidCallback onTap;
 
   @override
@@ -411,49 +395,49 @@ class _ToggleButtonState extends State<_ToggleButton> {
 
   @override
   Widget build(BuildContext context) {
-    final shadowOffset = _pressed ? 2.0 : 7.0;
+    // Primary button: resting 3px offset, pressed collapses to 0 and the
+    // button moves into its own shadow.
+    final shadowOffset = _pressed ? 0.0 : 3.0;
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) => setState(() => _pressed = false),
       onTapCancel: () => setState(() => _pressed = false),
       onTap: widget.busy ? null : widget.onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 100),
-        margin: EdgeInsets.only(top: 7 - shadowOffset, left: 7 - shadowOffset),
+        duration: _Tokens.pressFeedback,
+        curve: Curves.easeOut,
+        margin: EdgeInsets.only(top: 3 - shadowOffset, left: 3 - shadowOffset),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: _Palette.ink,
+              color: _Tokens.accent2,
               offset: Offset(shadowOffset, shadowOffset),
             ),
           ],
         ),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          height: 52,
           decoration: BoxDecoration(
-            color: widget.fg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _Palette.ink, width: 3),
+            color: _Tokens.signal,
+            border: Border.all(color: _Tokens.ink, width: 2),
           ),
           alignment: Alignment.center,
           child: widget.busy
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
                   child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    color: widget.bg,
+                    strokeWidth: 2.5,
+                    color: _Tokens.signalInk,
                   ),
                 )
               : Text(
-                  widget.isRunning ? 'LET IT SLEEP' : 'KEEP IT AWAKE',
-                  style: TextStyle(
-                    color: widget.bg,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    letterSpacing: 1,
+                  widget.isRunning ? 'let it sleep' : 'keep it awake',
+                  style: const TextStyle(
+                    fontFamily: _Tokens.majorMono,
+                    color: _Tokens.signalInk,
+                    fontSize: 14,
                   ),
                 ),
         ),
@@ -462,8 +446,8 @@ class _ToggleButtonState extends State<_ToggleButton> {
   }
 }
 
-class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
+class _ErrorToast extends StatelessWidget {
+  const _ErrorToast({required this.message});
   final String message;
 
   @override
@@ -471,17 +455,18 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _Palette.alert,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: _Palette.ink, width: 2),
+      decoration: const BoxDecoration(
+        color: _Tokens.surface,
+        border: Border.fromBorderSide(BorderSide(color: _Tokens.alert, width: 2)),
+        boxShadow: [BoxShadow(color: _Tokens.alert, offset: Offset(4, 4))],
       ),
+      alignment: Alignment.centerLeft,
       child: Text(
         message,
         style: const TextStyle(
-          color: _Palette.ink,
-          fontWeight: FontWeight.w700,
-          fontSize: 13,
+          fontFamily: _Tokens.majorMono,
+          color: _Tokens.ink,
+          fontSize: 14,
         ),
       ),
     );
