@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 class KeepScreenOnService : Service() {
     companion object {
         const val EXTRA_DURATION_MINUTES = "durationMinutes"
+        const val EXTRA_REFRESH_ONLY = "refreshOnly"
         private const val NOTIFICATION_CHANNEL_ID = "keep_screen_on_channel"
         private const val NOTIFICATION_ID = 1
 
@@ -25,6 +26,7 @@ class KeepScreenOnService : Service() {
     private var wakeLock: PowerManager.WakeLock? = null
     private val stopHandler = Handler(Looper.getMainLooper())
     private var stopRunnable: Runnable? = null
+    private var currentEndTimeMillis: Long? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -32,14 +34,27 @@ class KeepScreenOnService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val refreshOnly = intent?.getBooleanExtra(EXTRA_REFRESH_ONLY, false) ?: false
+        if (refreshOnly) {
+            // A notification an OEM shade let the user swipe away doesn't
+            // come back on its own — repost it at its existing end time
+            // without touching the wake lock or resetting the auto-stop
+            // countdown. If the service isn't actually running (e.g. it was
+            // genuinely killed), there's nothing to refresh — no-op.
+            if (isRunning) {
+                startForeground(NOTIFICATION_ID, buildNotification(currentEndTimeMillis))
+            }
+            return START_NOT_STICKY
+        }
+
         val durationMinutes = intent?.getIntExtra(EXTRA_DURATION_MINUTES, 0) ?: 0
-        val endTimeMillis = if (durationMinutes > 0) {
+        currentEndTimeMillis = if (durationMinutes > 0) {
             System.currentTimeMillis() + durationMinutes * 60_000L
         } else {
             null
         }
 
-        startForeground(NOTIFICATION_ID, buildNotification(endTimeMillis))
+        startForeground(NOTIFICATION_ID, buildNotification(currentEndTimeMillis))
         acquireWakeLock()
         scheduleAutoStop(durationMinutes)
 
@@ -129,6 +144,7 @@ class KeepScreenOnService : Service() {
             wakeLock?.release()
         }
         wakeLock = null
+        currentEndTimeMillis = null
         isRunning = false
     }
 

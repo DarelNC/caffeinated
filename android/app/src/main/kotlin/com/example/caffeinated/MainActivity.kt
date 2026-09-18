@@ -35,6 +35,18 @@ class MainActivity: FlutterActivity() {
                 "isServiceRunning" -> {
                     result.success(KeepScreenOnService.isRunning)
                 }
+                "refreshNotification" -> {
+                    try {
+                        if (KeepScreenOnService.isRunning) {
+                            val intent = Intent(this, KeepScreenOnService::class.java)
+                            intent.putExtra(KeepScreenOnService.EXTRA_REFRESH_ONLY, true)
+                            startForegroundService(intent)
+                        }
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("REFRESH_FAILED", e.message, null)
+                    }
+                }
                 else -> result.notImplemented()
             }
         }

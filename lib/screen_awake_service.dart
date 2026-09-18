@@ -39,6 +39,15 @@ class ScreenAwakeService {
     return result ?? false;
   }
 
+  /// Some OEM notification shades (MIUI/HyperOS in particular) let the user
+  /// swipe away an "ongoing" notification even though stock Android
+  /// shouldn't allow it. The service keeps running either way, but the
+  /// visual indicator is gone — this reposts it at its correct remaining
+  /// time. A no-op if the service isn't actually running.
+  Future<void> refreshNotification() {
+    return _channel.invokeMethod('refreshNotification');
+  }
+
   /// `startService`/`stopService` return as soon as Android *accepts* the
   /// request, not once the service has actually run onStartCommand/onDestroy
   /// (that happens on a later turn of the main thread's message loop). So

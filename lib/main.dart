@@ -93,6 +93,11 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _syncWithReality() async {
     final running = await _service.isRunning();
     if (mounted) setState(() => _isRunning = running);
+    if (running) {
+      // In case an OEM notification shade let the notification get swiped
+      // away while the service kept running in the background.
+      await _service.refreshNotification();
+    }
   }
 
   Future<void> _toggle() async {
