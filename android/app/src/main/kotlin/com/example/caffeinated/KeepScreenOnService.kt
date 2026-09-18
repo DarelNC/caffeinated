@@ -21,12 +21,17 @@ class KeepScreenOnService : Service() {
         @Volatile
         var isRunning: Boolean = false
             private set
+
+        // Read by MainActivity so the Dart UI can show a real countdown that
+        // survives an app restart, instead of guessing from local state.
+        @Volatile
+        var currentEndTimeMillis: Long? = null
+            private set
     }
 
     private var wakeLock: PowerManager.WakeLock? = null
     private val stopHandler = Handler(Looper.getMainLooper())
     private var stopRunnable: Runnable? = null
-    private var currentEndTimeMillis: Long? = null
 
     override fun onCreate() {
         super.onCreate()

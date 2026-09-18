@@ -3,15 +3,28 @@ import 'package:flutter/services.dart';
 /// Duration options for the "keep screen on" service.
 /// `minutes == null` means indefinitely (until the user stops it).
 enum AwakeDuration {
-  fiveMinutes(5, '5 MIN'),
-  tenMinutes(10, '10 MIN'),
-  thirtyMinutes(30, '30 MIN'),
-  forever(null, 'FOREVER');
+  fiveMinutes(5, '5', 'min'),
+  tenMinutes(10, '10', 'min'),
+  thirtyMinutes(30, '30', 'min'),
+  forever(null, '∞', 'ever');
 
-  const AwakeDuration(this.minutes, this.label);
+  const AwakeDuration(this.minutes, this.value, this.unit);
 
   final int? minutes;
-  final String label;
+  final String value;
+  final String unit;
+
+  String get description => minutes == null ? 'forever' : '$minutes min';
+}
+
+/// Ground truth for the service, as last reported by the native side.
+class ServiceStatus {
+  const ServiceStatus({required this.isRunning, required this.endTime});
+
+  final bool isRunning;
+
+  /// Null when not running, or when running indefinitely.
+  final DateTime? endTime;
 }
 
 /// Thin wrapper around the native Android foreground service that actually
@@ -37,6 +50,19 @@ class ScreenAwakeService {
   Future<bool> isRunning() async {
     final result = await _channel.invokeMethod<bool>('isServiceRunning');
     return result ?? false;
+  }
+
+  /// Full status including the real end time, so the UI's countdown can be
+  /// seeded correctly on launch/resume instead of guessed from local state.
+  Future<ServiceStatus> getStatus() async {
+    final result = await _channel.invokeMapMethod<String, Object?>('getStatus');
+    final endTimeMillis = result?['endTimeMillis'] as int?;
+    return ServiceStatus(
+      isRunning: result?['isRunning'] as bool? ?? false,
+      endTime: endTimeMillis == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(endTimeMillis),
+    );
   }
 
   /// Some OEM notification shades (MIUI/HyperOS in particular) let the user

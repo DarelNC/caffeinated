@@ -35,6 +35,14 @@ class MainActivity: FlutterActivity() {
                 "isServiceRunning" -> {
                     result.success(KeepScreenOnService.isRunning)
                 }
+                "getStatus" -> {
+                    result.success(
+                        mapOf(
+                            "isRunning" to KeepScreenOnService.isRunning,
+                            "endTimeMillis" to KeepScreenOnService.currentEndTimeMillis,
+                        )
+                    )
+                }
                 "refreshNotification" -> {
                     try {
                         if (KeepScreenOnService.isRunning) {

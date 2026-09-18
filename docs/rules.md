@@ -106,6 +106,35 @@ redrawn from scratch to match the system's icon language (straight edges,
 uniform stroke, square caps/joins, no fill) — the originals had soft curves
 and inconsistent stroke weights that didn't fit.
 
+**Superseded by a concrete mockup.** The above (built from prose alone,
+without being able to see the running result — no Android SDK on the build
+machine) didn't actually look right. The user then supplied a pixel-precise
+mockup built externally, and the UI was rebuilt to match it directly instead
+of continuing to interpret the abstract doc. Concrete differences from the
+prose-only pass:
+
+- A fourth face, **Space Grotesk**, for body/UI text the abstract doc would
+  have put in Major Mono Display — the mockup uses it for labels, the
+  footer tagline, and the floating notes. Bundled locally as a variable
+  font (`SpaceGrotesk[wght].ttf`), same offline reasoning as the other three.
+- The coffee-mug **SVG icons were dropped entirely** in favor of a mug built
+  from plain bordered boxes with an animated liquid fill (0–72% height) tied
+  to the running state — a more literal, better payoff visual than an
+  icon swap, and it directly needed the real countdown data rather than
+  reproducing it as a static image. `flutter_svg` was removed as a
+  dependency along with the icon files.
+- Decorative motion the abstract system only gestures at (ambient loops
+  "belong on marketing surfaces") is used directly here: a scrolling
+  ticker marquee, two slow-rotating background rings, staggered steam
+  wisps, and floating sticky notes. All are transform-only and only run
+  while the app is foregrounded and the screen is on, so they don't carry
+  the same battery cost as the notification-heartbeat idea that was
+  rejected earlier in this doc for running unattended in the background.
+- The "time left" panel now shows a real countdown backed by the native
+  service's actual end time (`getStatus` returns it), not a value guessed
+  or reconstructed client-side — seeded correctly even if the app was
+  closed and reopened mid-countdown.
+
 ## Cut list (things considered and deliberately not built yet)
 
 - Home-screen widget / quick-settings tile — mentioned as a "maybe later"

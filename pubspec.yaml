@@ -10,7 +10,6 @@ dependencies:
   flutter:
     sdk: flutter
   permission_handler: ^11.0.0
-  flutter_svg: ^2.0.10+1
 
 dev_dependencies:
   flutter_test:
@@ -19,8 +18,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/images/
   fonts:
     - family: Archivo Black
       fonts:
@@ -32,3 +29,6 @@ flutter:
       fonts:
         - asset: assets/fonts/DMSerifDisplay-Italic.ttf
           style: italic
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/SpaceGrotesk-Variable.ttf
