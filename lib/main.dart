@@ -189,27 +189,25 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final topInset = MediaQuery.of(context).padding.top;
-
     return Scaffold(
       backgroundColor: _T.ground,
       body: Stack(
         children: [
           const Positioned.fill(child: _Backdrop()),
-          Column(
-            children: [
-              _Marquee(topInset: topInset),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _StatusRow(isRunning: _isRunning),
-                      const SizedBox(height: 24),
-                      const _Headline(),
-                      const Spacer(flex: 3),
-                      GestureDetector(
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _StatusRow(isRunning: _isRunning),
+                  const SizedBox(height: 24),
+                  const _Headline(),
+                  const Spacer(flex: 3),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Center(
+                      child: GestureDetector(
                         onTap: _busy ? null : _toggle,
                         behavior: HitTestBehavior.opaque,
                         child: Column(
@@ -228,30 +226,30 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           ],
                         ),
                       ),
-                      const Spacer(flex: 3),
-                      _TimeLeftPanel(
-                        duration: _duration,
-                        isRunning: _isRunning,
-                        remaining: _remaining,
-                      ),
-                      const SizedBox(height: 20),
-                      _DurationGrid(
-                        selected: _duration,
-                        onSelected: _busy ? null : _selectDuration,
-                      ),
-                      if (_error != null) ...[
-                        const SizedBox(height: 12),
-                        _ErrorNote(message: _error!),
-                      ],
-                      const Spacer(flex: 2),
-                      const _StickyNotes(),
-                      const SizedBox(height: 18),
-                      const _Footer(),
-                    ],
+                    ),
                   ),
-                ),
+                  const Spacer(flex: 3),
+                  _TimeLeftPanel(
+                    duration: _duration,
+                    isRunning: _isRunning,
+                    remaining: _remaining,
+                  ),
+                  const SizedBox(height: 20),
+                  _DurationGrid(
+                    selected: _duration,
+                    onSelected: _busy ? null : _selectDuration,
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    _ErrorNote(message: _error!),
+                  ],
+                  const Spacer(flex: 2),
+                  const _StickyNotes(),
+                  const SizedBox(height: 18),
+                  const _Footer(),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -420,84 +418,6 @@ class _DashedCirclePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _DashedCirclePainter oldDelegate) =>
       oldDelegate.color != color;
-}
-
-class _Marquee extends StatefulWidget {
-  const _Marquee({required this.topInset});
-  final double topInset;
-
-  @override
-  State<_Marquee> createState() => _MarqueeState();
-}
-
-class _MarqueeState extends State<_Marquee> with SingleTickerProviderStateMixin {
-  static const _text =
-      'caffeinated * screen stays up * no sleep * new cycle * ';
-  final _key = GlobalKey();
-  late final AnimationController _c;
-  double? _setWidth;
-
-  static const _style = TextStyle(
-    fontFamily: _T.majorMono,
-    fontSize: 17,
-    letterSpacing: 0.7,
-    color: _T.ground,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(seconds: 18))
-      ..repeat();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-  }
-
-  void _measure() {
-    final box = _key.currentContext?.findRenderObject() as RenderBox?;
-    if (box != null && mounted) setState(() => _setWidth = box.size.width);
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: _T.signal,
-      padding: EdgeInsets.only(top: widget.topInset),
-      height: widget.topInset + 46,
-      child: ClipRect(
-        child: _setWidth == null
-            ? Opacity(
-                opacity: 0,
-                child: Text(_text, key: _key, style: _style, maxLines: 1),
-              )
-            : AnimatedBuilder(
-                animation: _c,
-                builder: (context, child) {
-                  return OverflowBox(
-                    maxWidth: double.infinity,
-                    alignment: Alignment.centerLeft,
-                    child: Transform.translate(
-                      offset: Offset(-_c.value * _setWidth!, 0),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_text, style: _style, maxLines: 1),
-                          Text(_text, style: _style, maxLines: 1),
-                          Text(_text, style: _style, maxLines: 1),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-      ),
-    );
-  }
 }
 
 class _StatusRow extends StatelessWidget {
@@ -826,7 +746,7 @@ class _DurationTile extends StatelessWidget {
               duration.value,
               style: TextStyle(
                 fontFamily: _T.archivoBlack,
-                fontSize: 22,
+                fontSize: 24,
                 color: isSelected ? _T.ground : _T.ink,
               ),
             ),
@@ -836,7 +756,7 @@ class _DurationTile extends StatelessWidget {
               style: TextStyle(
                 fontFamily: _T.spaceGrotesk,
                 fontWeight: FontWeight.w700,
-                fontSize: 10,
+                fontSize: 11,
                 letterSpacing: 0.9,
                 color: isSelected ? _T.ground : _T.ink,
               ),
