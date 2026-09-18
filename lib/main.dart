@@ -743,7 +743,7 @@ class _DurationTile extends StatelessWidget {
         child: Column(
           children: [
             SizedBox(
-              height: 28,
+              height: 30,
               child: Center(
                 child: Transform.translate(
                   offset: Offset(0, duration.value == '∞' ? -4 : 0),
