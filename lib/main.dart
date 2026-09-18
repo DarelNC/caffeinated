@@ -653,7 +653,7 @@ class _TimeLeftPanel extends StatelessWidget {
             style: TextStyle(
               fontFamily: _T.spaceGrotesk,
               fontWeight: FontWeight.w700,
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: 1.1,
               color: _T.dim,
             ),
@@ -742,12 +742,20 @@ class _DurationTile extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(
-              duration.value,
-              style: TextStyle(
-                fontFamily: _T.archivoBlack,
-                fontSize: 24,
-                color: isSelected ? _T.ground : _T.ink,
+            SizedBox(
+              height: 28,
+              child: Center(
+                child: Text(
+                  duration.value,
+                  style: TextStyle(
+                    fontFamily: _T.archivoBlack,
+                    // The infinity glyph sits smaller/thinner than digits at
+                    // the same size in this face — bump it so it reads as
+                    // the same visual weight, not a shrunken afterthought.
+                    fontSize: duration.value == '∞' ? 34 : 24,
+                    color: isSelected ? _T.ground : _T.ink,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 3),
