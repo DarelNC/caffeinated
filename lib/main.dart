@@ -101,15 +101,25 @@ class _HomeScreenState extends State<HomeScreen>
       _error = null;
     });
     try {
-      if (_isRunning) {
-        await _service.stop();
-      } else {
+      final wantsRunning = !_isRunning;
+      if (wantsRunning) {
         await _service.start(_duration);
+      } else {
+        await _service.stop();
       }
       // Trust, but verify: ask the native side what actually happened
-      // instead of flipping a local flag and hoping.
-      final running = await _service.isRunning();
-      setState(() => _isRunning = running);
+      // instead of flipping a local flag and hoping. The native call
+      // returning doesn't mean onStartCommand/onDestroy ran yet, so give
+      // it a brief window to catch up before believing it failed.
+      final confirmed = await _service.waitUntil(wantsRunning);
+      setState(() {
+        _isRunning = confirmed ? wantsRunning : _isRunning;
+        if (!confirmed) {
+          _error = wantsRunning
+              ? "Couldn't confirm the screen lock started — try again."
+              : "Couldn't confirm it stopped — try again.";
+        }
+      });
     } on PlatformException catch (e) {
       setState(() => _error = e.message ?? 'Something went wrong.');
     } finally {

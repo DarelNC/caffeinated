@@ -38,4 +38,21 @@ class ScreenAwakeService {
     final result = await _channel.invokeMethod<bool>('isServiceRunning');
     return result ?? false;
   }
+
+  /// `startService`/`stopService` return as soon as Android *accepts* the
+  /// request, not once the service has actually run onStartCommand/onDestroy
+  /// (that happens on a later turn of the main thread's message loop). So
+  /// checking [isRunning] exactly once right after can catch it mid-flight
+  /// and report the wrong thing. Poll briefly instead of trusting one check.
+  Future<bool> waitUntil(
+    bool expected, {
+    int attempts = 8,
+    Duration interval = const Duration(milliseconds: 60),
+  }) async {
+    for (var i = 0; i < attempts; i++) {
+      if (await isRunning() == expected) return true;
+      if (i < attempts - 1) await Future.delayed(interval);
+    }
+    return false;
+  }
 }
