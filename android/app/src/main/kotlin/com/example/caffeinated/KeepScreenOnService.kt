@@ -3,8 +3,9 @@ package com.example.caffeinated
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.os.CountDownTimer
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 
@@ -22,7 +23,8 @@ class KeepScreenOnService : Service() {
     }
 
     private var wakeLock: PowerManager.WakeLock? = null
-    private var countDownTimer: CountDownTimer? = null
+    private val stopHandler = Handler(Looper.getMainLooper())
+    private var stopRunnable: Runnable? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -31,8 +33,13 @@ class KeepScreenOnService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val durationMinutes = intent?.getIntExtra(EXTRA_DURATION_MINUTES, 0) ?: 0
+        val endTimeMillis = if (durationMinutes > 0) {
+            System.currentTimeMillis() + durationMinutes * 60_000L
+        } else {
+            null
+        }
 
-        startForeground(NOTIFICATION_ID, buildNotification(durationMinutes))
+        startForeground(NOTIFICATION_ID, buildNotification(endTimeMillis))
         acquireWakeLock()
         scheduleAutoStop(durationMinutes)
 
@@ -54,25 +61,17 @@ class KeepScreenOnService : Service() {
     }
 
     private fun scheduleAutoStop(durationMinutes: Int) {
-        countDownTimer?.cancel()
-        countDownTimer = null
+        stopRunnable?.let { stopHandler.removeCallbacks(it) }
+        stopRunnable = null
 
         if (durationMinutes <= 0) return // 0 = infinite, no auto-stop
 
-        val totalMillis = durationMinutes * 60_000L
-        countDownTimer = object : CountDownTimer(totalMillis, 30_000L) {
-            override fun onTick(millisUntilFinished: Long) {
-                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                manager.notify(NOTIFICATION_ID, buildNotification(durationMinutes, millisUntilFinished))
-            }
-
-            override fun onFinish() {
-                stopSelf()
-            }
-        }.also { it.start() }
+        val runnable = Runnable { stopSelf() }
+        stopRunnable = runnable
+        stopHandler.postDelayed(runnable, durationMinutes * 60_000L)
     }
 
-    private fun buildNotification(durationMinutes: Int, millisRemaining: Long? = null): Notification {
+    private fun buildNotification(endTimeMillis: Long?): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -81,29 +80,28 @@ class KeepScreenOnService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
-        val contentText = when {
-            durationMinutes <= 0 -> "Screen will stay on until you stop it."
-            millisRemaining != null -> "Screen stays on for ${formatRemaining(millisRemaining)} more."
-            else -> "Screen stays on for $durationMinutes min."
-        }
-
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+        val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Caffeinated is active")
-            .setContentText(contentText)
             .setSmallIcon(R.drawable.ic_caffeinated_on_large)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
-            .build()
-    }
 
-    private fun formatRemaining(millis: Long): String {
-        val totalSeconds = millis / 1000
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
-        return if (minutes > 0) "${minutes}m ${seconds}s" else "${seconds}s"
+        if (endTimeMillis != null) {
+            // A native chronometer ticks this down every second on its own —
+            // no repeated notify() calls needed to keep it "live".
+            builder
+                .setContentText("Screen stays on until the countdown ends.")
+                .setWhen(endTimeMillis)
+                .setUsesChronometer(true)
+                .setChronometerCountDown(true)
+        } else {
+            builder.setContentText("Screen will stay on until you stop it.")
+        }
+
+        return builder.build()
     }
 
     private fun createNotificationChannel() {
@@ -125,8 +123,8 @@ class KeepScreenOnService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        countDownTimer?.cancel()
-        countDownTimer = null
+        stopRunnable?.let { stopHandler.removeCallbacks(it) }
+        stopRunnable = null
         if (wakeLock?.isHeld == true) {
             wakeLock?.release()
         }
