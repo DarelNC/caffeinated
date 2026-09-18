@@ -745,15 +745,18 @@ class _DurationTile extends StatelessWidget {
             SizedBox(
               height: 28,
               child: Center(
-                child: Text(
-                  duration.value,
-                  style: TextStyle(
-                    fontFamily: _T.archivoBlack,
-                    // The infinity glyph sits smaller/thinner than digits at
-                    // the same size in this face — bump it so it reads as
-                    // the same visual weight, not a shrunken afterthought.
-                    fontSize: duration.value == '∞' ? 34 : 24,
-                    color: isSelected ? _T.ground : _T.ink,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: duration.value == '∞' ? 4 : 0),
+                  child: Text(
+                    duration.value,
+                    style: TextStyle(
+                      fontFamily: _T.archivoBlack,
+                      // The infinity glyph sits smaller/thinner than digits
+                      // at the same size in this face — bump it so it reads
+                      // as the same visual weight, not a shrunken afterthought.
+                      fontSize: duration.value == '∞' ? 34 : 24,
+                      color: isSelected ? _T.ground : _T.ink,
+                    ),
                   ),
                 ),
               ),
