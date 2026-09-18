@@ -745,8 +745,8 @@ class _DurationTile extends StatelessWidget {
             SizedBox(
               height: 28,
               child: Center(
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: duration.value == '∞' ? 4 : 0),
+                child: Transform.translate(
+                  offset: Offset(0, duration.value == '∞' ? -4 : 0),
                   child: Text(
                     duration.value,
                     style: TextStyle(
