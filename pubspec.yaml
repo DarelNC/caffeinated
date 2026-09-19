@@ -1,5 +1,5 @@
 name: caffeinated
-description: "A new Flutter project."
+description: "Keeps the Android screen on for a set duration or indefinitely, even after you leave the app."
 publish_to: 'none'
 version: 0.1.0
 
