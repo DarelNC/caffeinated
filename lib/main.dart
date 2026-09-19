@@ -133,6 +133,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       final wantsRunning = !_isRunning;
       if (wantsRunning) {
+        // Awaited, not fire-and-forget: if this is the first-ever start, the
+        // permission dialog from initState may not have resolved yet, and
+        // starting the foreground service before Android has decided
+        // grants/denies POST_NOTIFICATIONS means the notification silently
+        // never posts (the service and wake lock still work either way —
+        // that permission only gates whether the notification is shown).
+        await _requestNotificationPermission();
         await _service.start(_duration);
       } else {
         await _service.stop();
