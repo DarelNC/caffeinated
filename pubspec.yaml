@@ -15,6 +15,16 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/icon/icon_full.png"
+  adaptive_icon_background: "#2A0F14"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  # Android 13+ themed icon: the OS extracts this layer's alpha shape and
+  # tints it per the user's wallpaper/theme, so its own RGB is irrelevant.
+  adaptive_icon_monochrome: "assets/icon/icon_monochrome.png"
 
 flutter:
   uses-material-design: true
