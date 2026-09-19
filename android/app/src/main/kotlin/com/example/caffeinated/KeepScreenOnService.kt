@@ -64,6 +64,7 @@ class KeepScreenOnService : Service() {
         scheduleAutoStop(durationMinutes)
 
         isRunning = true
+        CaffeinatedWidgetProvider.refreshAll(this)
         return START_NOT_STICKY
     }
 
@@ -151,6 +152,7 @@ class KeepScreenOnService : Service() {
         wakeLock = null
         currentEndTimeMillis = null
         isRunning = false
+        CaffeinatedWidgetProvider.refreshAll(this)
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

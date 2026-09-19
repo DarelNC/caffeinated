@@ -158,10 +158,34 @@ than migrating ahead of when Flutter itself defaults to them.
 installed Flutter SDK itself (currently 36 / Android 16) and move forward
 automatically on a Flutter upgrade, with no file to edit here.
 
+## Home-screen widget
+
+Built as a status-only widget (`CaffeinatedWidgetProvider`): shows
+AWAKE/ASLEEP, tapping it opens the app. Two decisions made explicitly rather
+than defaulted into:
+
+- **No toggle on the widget itself, and no Quick Settings Tile.** Starting
+  and stopping stay in the app, where the duration picker and countdown
+  already live — a widget-side toggle would need to duplicate that UI or
+  silently default to "last used duration," and a QS tile invites turning
+  it off from the shade without ever seeing the app. Tap opens the app;
+  that's the only interaction.
+- **No live countdown in the widget.** Same reasoning as the notification
+  heartbeat that got rejected earlier in this doc: keeping a widget's text
+  ticking down needs periodic updates, which cost battery for a
+  battery-conscious app. The widget only updates when the service actually
+  starts or stops (pushed directly from `KeepScreenOnService`, not polled),
+  plus a 30-minute defensive fallback (`updatePeriodMillis`, Android's
+  practical minimum) in case a push is ever missed.
+
+**Known scope cut:** the widget uses the plain system font, not the app's
+Archivo Black/Major Mono typefaces — those exist only as Flutter assets,
+and shipping them as native Android font resources too was judged not
+worth it for a two-line status widget. Revisit if the widget ever grows
+more content.
+
 ## Cut list (things considered and deliberately not built yet)
 
-- Home-screen widget / quick-settings tile — mentioned as a "maybe later"
-  idea; no decision made yet, not started.
 - Cross-platform support (iOS/desktop/web) — deliberately dropped. The
   product is "keep an Android phone's screen on while backgrounded," which
   needs a real foreground service + wake lock; that's an Android-specific
