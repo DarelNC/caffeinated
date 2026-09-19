@@ -135,6 +135,29 @@ prose-only pass:
   or reconstructed client-side — seeded correctly even if the app was
   closed and reopened mid-countdown.
 
+## Android build toolchain versions
+
+Gradle/AGP/Kotlin are pinned in `android/gradle/wrapper/gradle-wrapper.properties`
+and `android/settings.gradle`, not resolved automatically — they need bumping
+by hand as Flutter's own minimums move. When bumping, match the exact
+combination the installed Flutter SDK was built and tested against
+(`templateDefaultGradleVersion` / `templateAndroidGradlePluginVersion` /
+`templateKotlinGradlePluginVersion` in `flutter_tools/lib/src/android/gradle_utils.dart`,
+also reproducible by running `flutter create` in a scratch directory and
+reading what it generates) rather than whatever the latest AGP release
+happens to be — the two can be well ahead of each other, and the newest AGP
+may need a DSL/toolchain jump this Flutter version doesn't support yet.
+Current pin (Flutter 3.44.0): Gradle 9.1.0, AGP 9.0.1, Kotlin 2.3.20,
+Java/Kotlin target 17, with `android.newDsl=false` / `android.builtInKotlin=false`
+in `gradle.properties` — both explicit opt-outs from AGP 9's new default
+behavior, matching what Flutter's own template does for this release rather
+than migrating ahead of when Flutter itself defaults to them.
+
+`compileSdk`/`targetSdk` are not hardcoded — they reference
+`flutter.compileSdkVersion`/`flutter.targetSdkVersion`, which are set by the
+installed Flutter SDK itself (currently 36 / Android 16) and move forward
+automatically on a Flutter upgrade, with no file to edit here.
+
 ## Cut list (things considered and deliberately not built yet)
 
 - Home-screen widget / quick-settings tile — mentioned as a "maybe later"
