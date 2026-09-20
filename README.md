@@ -1,12 +1,8 @@
-# caffeinated
+# Caffeinated
 
-Keeps your Android screen on after you switch away from the app or lock the phone, for a set duration or indefinitely. No account, no data collection, no network calls.
+Caffeinated is an Android app that keeps your screen on after you switch away or lock the phone, for a set time or indefinitely. No account, no data collection, no network calls.
 
-> **Working name.** "caffeinated" hasn't been through a naming or trademark pass yet. See [docs/rules.md](docs/rules.md) before this goes anywhere public.
-
-<!-- TODO(screenshot): idle state -->
-<!-- TODO(screenshot): active state, timer running -->
-<!-- TODO(screenshot): persistent notification -->
+> **Working name.** "Caffeinated" hasn't been through a naming or trademark check yet, so it may change.
 
 ## Why Android only
 
@@ -19,6 +15,8 @@ Staying on after you leave the app needs a real background wake lock. iOS gives 
 - Reopening the app re-syncs with the service's actual state instead of a remembered guess, because Android can kill the service independently of the app.
 
 ## Running it
+
+There's no prebuilt release yet, so you build it from source.
 
 ```bash
 flutter pub get
@@ -33,8 +31,7 @@ You need the Android SDK and a device or emulator. There is no iOS, web, desktop
 - `lib/screen_awake_service.dart`: the MethodChannel bridge to native Android. The widget tree never talks to platform channels directly.
 - `android/app/src/main/kotlin/.../KeepScreenOnService.kt`: the foreground service, with the wake lock, notification and auto-stop timer.
 - `android/app/src/main/kotlin/.../MainActivity.kt`: the MethodChannel handler that connects Dart calls to the service.
-- `docs/rules.md`: this project's adapted copy of the workspace rules, covering what was kept, dropped and why. Read it before touching UI or architecture.
-- `docs/writing.md`: how text in this repo is written.
+- `docs/rules.md`: the design decisions behind the app, including what was left out and why.
 
 ## Permissions
 
