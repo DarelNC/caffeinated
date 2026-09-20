@@ -4,6 +4,11 @@ Caffeinated is an Android app that keeps your screen on after you switch away or
 
 > **Working name.** "Caffeinated" hasn't been through a naming or trademark check yet, so it may change.
 
+<p>
+  <img src="docs/screenshots/idle.png" alt="The home screen while asleep: a dark mug, 'tap to caffeinate', a 10:00 timer and the 5, 10, 30 minute and forever duration buttons" width="260">
+  <img src="docs/screenshots/active.png" alt="The home screen while awake: the mug filled in green, 'tap to let it sleep' and a 09:57 countdown" width="260">
+</p>
+
 ## Why Android only
 
 Staying on after you leave the app needs a real background wake lock. iOS gives third-party apps no equivalent: once an app is backgrounded, the OS suspends it within seconds, and no public API keeps the screen alive from there. A foreground-only iOS build would stop working the moment you switch apps, so there isn't one. The cut list in [`docs/rules.md`](docs/rules.md) has the full reasoning.
